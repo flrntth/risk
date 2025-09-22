@@ -6,34 +6,14 @@
   <title>Risk meter - szöveges feliratok</title>
   <style>
     :root { --max-width: 760px; }
-    body {
-      font-family: Inter, system-ui, "Segoe UI", Roboto, Arial;
-      margin: 0; padding: 20px;
-      display: flex; flex-direction: column; gap: 12px; align-items: center;
-      background: #f6f7f9;
-    }
+    body { font-family: Inter, system-ui, "Segoe UI", Roboto, Arial; margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; background: #f6f7f9; }
     .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: center; }
-    .controls input[type="number"], .controls input[type="text"] {
-      padding: 8px 10px; border-radius: 8px; border: 1px solid #d0d5dd; font-size: 14px; min-width: 120px;
-    }
+    .controls input[type="number"], .controls input[type="text"] { padding: 8px 10px; border-radius: 8px; border: 1px solid #d0d5dd; font-size: 14px; min-width: 120px; }
     .controls button { padding: 8px 12px; border-radius: 8px; border: none; background: #2f80ed; color: white; cursor: pointer; font-weight: 600; }
     .controls button.secondary { background: #6b7280; }
-    .meter-wrap {
-      width: min(92vw,var(--max-width)); aspect-ratio:2/1;
-      background-image:url("meter.png"); background-repeat:no-repeat; background-position:center bottom; background-size:contain;
-      position: relative; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); overflow: visible;
-    }
-    .label {
-      position: absolute; transform: translate(-50%,-50%);
-      font-size: 14px; font-weight: 700; pointer-events:auto; user-select:none;
-      padding: 4px 8px; border-radius:6px; background: rgba(255,255,255,0.85);
-      box-shadow: 0 2px 8px rgba(16,24,40,0.08); white-space: nowrap; cursor: default;
-    }
-    .list {
-      width: min(92vw,var(--max-width)); max-width: var(--max-width);
-      background: white; border-radius: 8px; padding: 8px;
-      box-shadow:0 6px 18px rgba(16,24,40,0.06); display:grid; gap:6px;
-    }
+    .meter-wrap { width: min(92vw,var(--max-width)); aspect-ratio:2/1; background-image:url("meter.png"); background-repeat:no-repeat; background-position:center bottom; background-size:contain; position: relative; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); overflow: visible; }
+    .label { position: absolute; transform: translate(-50%,-50%); font-size: 14px; font-weight: 700; pointer-events:auto; user-select:none; padding: 4px 8px; border-radius:6px; background: rgba(255,255,255,0.85); box-shadow: 0 2px 8px rgba(16,24,40,0.08); white-space: nowrap; cursor: default; }
+    .list { width: min(92vw,var(--max-width)); max-width: var(--max-width); background: white; border-radius: 8px; padding: 8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); display:grid; gap:6px; }
     .item { display:flex; gap:8px; align-items:center; justify-content:space-between; }
     .item>.meta { font-weight:600; }
     .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
@@ -52,89 +32,89 @@
   </div>
 
   <div class="meter-wrap" id="meter"></div>
-
   <div class="list" id="labelsList"></div>
 
-<script type="module">
-  // Firebase SDK
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js"></script>
 
-  // Firebase config (a te adataid)
-  const firebaseConfig = {
-    apiKey: "AIzaSyC8Bv0tvQmUUQqluY0J0DEL2ZKTFgibWE8",
-    authDomain: "risk-183e9.firebaseapp.com",
-    projectId: "risk-183e9",
-    storageBucket: "risk-183e9.firebasestorage.app",
-    messagingSenderId: "63059763527",
-    appId: "1:63059763527:web:6272d43b2eee843d8aac62",
-    measurementId: "G-3PCRC8XJJL"
-  };
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyC8Bv0tvQmUUQqluY0J0DEL2ZKTFgibWE8",
+      authDomain: "risk-183e9.firebaseapp.com",
+      databaseURL: "https://risk-183e9-default-rtdb.firebaseio.com/",
+      projectId: "risk-183e9",
+      storageBucket: "risk-183e9.appspot.com",
+      messagingSenderId: "63059763527",
+      appId: "1:63059763527:web:6272d43b2eee843d8aac62"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const labelsCol = collection(db,"labels");
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const labelsRef = db.ref("labels");
 
-  const meter = document.getElementById("meter");
-  const addBtn = document.getElementById("addBtn");
-  const clearBtn = document.getElementById("clearBtn");
-  const valueInput = document.getElementById("valueInput");
-  const textInput = document.getElementById("textInput");
-  const labelsList = document.getElementById("labelsList");
+    const meter = document.getElementById("meter");
+    const addBtn = document.getElementById("addBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const valueInput = document.getElementById("valueInput");
+    const textInput = document.getElementById("textInput");
+    const labelsList = document.getElementById("labelsList");
 
-  let labels = [];
+    let labels = [];
 
-  function valueToAngleRad(v){ let val=Number(v); if(!isFinite(val)) val=1; if(val<1) val=1; if(val>100) val=100; return Math.PI*(1-(val-1)/99);}
-  function computePosForValue(v,offset=12){const rect=meter.getBoundingClientRect(),w=rect.width,h=rect.height,cx=w/2,cy=h,r=Math.min(w/2,h),theta=valueToAngleRad(v),x=cx+r*Math.cos(theta),y=cy-r*Math.sin(theta);return {left:x+offset*Math.cos(theta),top:y-offset*Math.sin(theta)};}
-  function createLabelDom(obj){const d=document.createElement("div");d.className="label";d.dataset.id=obj.id;d.title="Dupla katt rá a szerkesztéshez";d.innerHTML=obj.text;d.addEventListener("dblclick",()=>editLabel(obj.id));return d;}
-  function renderList(){labelsList.innerHTML="";if(labels.length===0){labelsList.textContent="Nincsenek feliratok — adj hozzá egyet fent.";return;}labels.forEach(l=>{const row=document.createElement("div");row.className="item";const meta=document.createElement("div");meta.className="meta";meta.textContent=l.value+" → "+l.text;const controls=document.createElement("div");const editB=document.createElement("button");editB.className="edit";editB.textContent="Szerkeszt";editB.addEventListener("click",()=>editLabel(l.id));const delB=document.createElement("button");delB.className="del";delB.textContent="Töröl";delB.addEventListener("click",()=>removeLabel(l.id));controls.appendChild(editB);controls.appendChild(delB);row.appendChild(meta);row.appendChild(controls);labelsList.appendChild(row);});}
-  function renderLabels(){meter.querySelectorAll(".label").forEach(n=>n.remove());labels.forEach(l=>{const dom=createLabelDom(l);meter.appendChild(dom);const pos=computePosForValue(l.value,l.offset||12);dom.style.left=pos.left+"px";dom.style.top=pos.top+"px";});}
+    function valueToAngleRad(v){ let val=Number(v); if(!isFinite(val)) val=1; if(val<1) val=1; if(val>100) val=100; return Math.PI*(1-(val-1)/99);}
+    function computePosForValue(v,offset=12){const rect=meter.getBoundingClientRect(),w=rect.width,h=rect.height,cx=w/2,cy=h,r=Math.min(w/2,h),theta=valueToAngleRad(v),x=cx+r*Math.cos(theta),y=cy-r*Math.sin(theta);return {left:x+offset*Math.cos(theta),top:y-offset*Math.sin(theta)};}
+    function createLabelDom(obj){const d=document.createElement("div");d.className="label";d.dataset.id=obj.id;d.title="Dupla katt rá a szerkesztéshez";d.innerHTML=obj.text;d.addEventListener("dblclick",()=>editLabel(obj.id));return d;}
+    function renderList(){labelsList.innerHTML="";if(labels.length===0){labelsList.textContent="Nincsenek feliratok — adj hozzá egyet fent.";return;}labels.forEach(l=>{const row=document.createElement("div");row.className="item";const meta=document.createElement("div");meta.className="meta";meta.textContent=l.value+" → "+l.text;const controls=document.createElement("div");const editB=document.createElement("button");editB.className="edit";editB.textContent="Szerkeszt";editB.addEventListener("click",()=>editLabel(l.id));const delB=document.createElement("button");delB.className="del";delB.textContent="Töröl";delB.addEventListener("click",()=>removeLabel(l.id));controls.appendChild(editB);controls.appendChild(delB);row.appendChild(meta);row.appendChild(controls);labelsList.appendChild(row);});}
+    function renderLabels(){meter.querySelectorAll(".label").forEach(n=>n.remove());labels.forEach(l=>{const dom=createLabelDom(l);meter.appendChild(dom);const pos=computePosForValue(l.value,l.offset||12);dom.style.left=pos.left+"px";dom.style.top=pos.top+"px";});}
 
-  async function addLabelFromInputs(){
-    const vRaw=valueInput.value,txt=textInput.value.trim();
-    if(!txt){alert("Adj meg egy feliratot (szöveg)!");return;}
-    const v=Math.round(Number(vRaw));
-    if(!isFinite(v)||v<1||v>100){alert("Adj meg egy érvényes számot 1 és 100 között!");return;}
-    const obj={value:v,text:txt,offset:12};
-    await addDoc(labelsCol,obj);
-    valueInput.value=""; textInput.value="";
-  }
+    function addLabelFromInputs(){
+      const vRaw=valueInput.value,txt=textInput.value.trim();
+      if(!txt){alert("Adj meg egy feliratot (szöveg)!");return;}
+      const v=Math.round(Number(vRaw));
+      if(!isFinite(v)||v<1||v>100){alert("Adj meg egy érvényes számot 1 és 100 között!");return;}
+      const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      const obj={id,id,value:v,text:txt,offset:12};
+      labelsRef.child(id).set(obj);
+      valueInput.value=""; textInput.value="";
+    }
 
-  async function editLabel(id){
-    const cur=labels.find(x=>x.id===id);
-    if(!cur) return;
-    const newValRaw=prompt("Érték (1-100):",cur.value);
-    if(newValRaw===null) return;
-    const newVal=Math.round(Number(newValRaw));
-    if(!isFinite(newVal)||newVal<1||newVal>100){alert("Érvénytelen szám!");return;}
-    const newTxt=prompt("Felirat szövege:",cur.text);
-    if(newTxt===null) return;
-    const docRef=doc(db,"labels",id);
-    await updateDoc(docRef,{value:newVal,text:newTxt.trim()||cur.text});
-  }
+    function editLabel(id){
+      const cur=labels.find(x=>x.id===id);
+      if(!cur) return;
+      const newValRaw=prompt("Érték (1-100):",cur.value);
+      if(newValRaw===null) return;
+      const newVal=Math.round(Number(newValRaw));
+      if(!isFinite(newVal)||newVal<1||newVal>100){alert("Érvénytelen szám!");return;}
+      const newTxt=prompt("Felirat szövege:",cur.text);
+      if(newTxt===null) return;
+      labelsRef.child(id).update({value:newVal,text:newTxt.trim()||cur.text});
+    }
 
-  async function removeLabel(id){
-    if(!confirm("Biztos törlöd ezt a feliratot?")) return;
-    await deleteDoc(doc(db,"labels",id));
-  }
+    function removeLabel(id){
+      if(!confirm("Biztos törlöd ezt a feliratot?")) return;
+      labelsRef.child(id).remove();
+    }
 
-  clearBtn.addEventListener("click",async()=>{
-    if(!confirm("Összes felirat törlése?")) return;
-    for(const l of labels){ await deleteDoc(doc(db,"labels",l.id)); }
-  });
+    clearBtn.addEventListener("click",()=>{
+      if(!confirm("Összes felirat törlése?")) return;
+      labelsRef.remove();
+    });
 
-  addBtn.addEventListener("click",addLabelFromInputs);
-  window.addEventListener("resize",renderLabels);
-  meter.addEventListener("dblclick",()=>valueInput.focus());
+    addBtn.addEventListener("click",addLabelFromInputs);
+    window.addEventListener("resize",renderLabels);
+    meter.addEventListener("dblclick",()=>valueInput.focus());
 
-  // Firestore valós idejű frissítés
-  onSnapshot(labelsCol,snap=>{
-    labels=[];
-    snap.forEach(doc=>labels.push({...doc.data(),id:doc.id}));
-    renderList();
-    renderLabels();
-  });
-</script>
+    // valós idejű frissítés
+    labelsRef.on("value", snapshot=>{
+      labels=[];
+      snapshot.forEach(child=>labels.push(child.val()));
+      renderList();
+      renderLabels();
+    });
+  </script>
 
 </body>
 </html>

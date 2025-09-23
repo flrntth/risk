@@ -13,7 +13,7 @@
     .controls button { padding:8px 12px; border-radius:8px; border:none; background:#2f80ed; color:white; cursor:pointer; font-weight:600; }
     .controls button.secondary { background:#6b7280; }
     .meter-wrap { width:min(92vw,var(--max-width)); aspect-ratio:2/1; background-image:url("meter.png"); background-repeat:no-repeat; background-position:center bottom; background-size:contain; position:relative; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); overflow:visible; }
-    .label { position:absolute; transform:translate(-50%,-50%); font-size:14px; font-weight:700; pointer-events:auto; user-select:none; padding:4px 8px; border-radius:6px; background:rgba(255,255,255,0.85); box-shadow:0 2px 8px rgba(16,24,40,0.08); white-space:nowrap; cursor:default; }
+    .label { position:absolute; transform:translate(-50%,-50%); font-size:14px; font-weight:700; pointer-events:auto; user-select:none; padding:4px 8px; border-radius:6px; background:rgba(255,255,255,0.85); box-shadow:0 2px 8px rgba(16,24,40,0.08); white-space:nowrap; cursor:default; z-index: 10; }
     .list { width:min(92vw,var(--max-width)); max-width:var(--max-width); background:white; border-radius:8px; padding:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); display:grid; gap:6px; }
     .item { display:flex; gap:8px; align-items:center; justify-content:space-between; }
     .item>.meta { font-weight:600; }
@@ -63,67 +63,11 @@
 
   let labels = [];
 
-  function valueToAngleRad(v){
-    let val = Number(v);
-    if(!isFinite(val)) val = 1;
-    if(val < 1) val = 1;
-    if(val > 100) val = 100;
-    return Math.PI * (1 - (val - 1) / 99);
-  }
-
-  function computePosForValue(v, offset=12){
-    const rect = meter.getBoundingClientRect(),
-          w = rect.width, h = rect.height,
-          cx = w/2, cy = h, r = Math.min(w/2,h),
-          theta = valueToAngleRad(v),
-          x = cx + r * Math.cos(theta),
-          y = cy - r * Math.sin(theta);
-    return {left: x + offset*Math.cos(theta), top: y - offset*Math.sin(theta)};
-  }
-
-  function renderList(){
-    labelsList.innerHTML="";
-    if(labels.length===0){
-      labelsList.textContent="Nincsenek feliratok — adj hozzá egyet fent.";
-      return;
-    }
-    labels.forEach(l=>{
-      const row=document.createElement("div");
-      row.className="item";
-      const meta=document.createElement("div");
-      meta.className="meta";
-      meta.textContent=l.value+" → "+l.text;
-      const controls=document.createElement("div");
-      const editB=document.createElement("button");
-      editB.className="edit";
-      editB.textContent="Szerkeszt";
-      editB.addEventListener("click",()=>editLabel(l.id));
-      const delB=document.createElement("button");
-      delB.className="del";
-      delB.textContent="Töröl";
-      delB.addEventListener("click",()=>removeLabel(l.id));
-      controls.appendChild(editB); controls.appendChild(delB);
-      row.appendChild(meta); row.appendChild(controls);
-      labelsList.appendChild(row);
-    });
-  }
-
-  function renderLabels(){
-    // előző címkék törlése
-    meter.querySelectorAll(".label").forEach(n=>n.remove());
-
-    // összes címke kirajzolása
-    labels.forEach(l=>{
-      const dom=document.createElement("div");
-      dom.className="label";
-      dom.dataset.id=l.id;
-      dom.textContent=l.text;
-      meter.appendChild(dom);
-      const pos=computePosForValue(l.value, l.offset||12);
-      dom.style.left=pos.left+"px";
-      dom.style.top=pos.top+"px";
-    });
-  }
+  function valueToAngleRad(v){ let val=Number(v); if(!isFinite(val)) val=1; if(val<1) val=1; if(val>100) val=100; return Math.PI*(1-(val-1)/99);}
+  function computePosForValue(v,offset=12){const rect=meter.getBoundingClientRect(),w=rect.width,h=rect.height,cx=w/2,cy=h,r=Math.min(w/2,h),theta=valueToAngleRad(v),x=cx+r*Math.cos(theta),y=cy-r*Math.sin(theta);return {left:x+offset*Math.cos(theta),top:y-offset*Math.sin(theta)};}
+  function createLabelDom(obj){const d=document.createElement("div");d.className="label";d.dataset.id=obj.id;d.title="Dupla katt rá a szerkesztéshez";d.innerHTML=obj.text;d.addEventListener("dblclick",()=>editLabel(obj.id));return d;}
+  function renderList(){labelsList.innerHTML="";if(labels.length===0){labelsList.textContent="Nincsenek feliratok — adj hozzá egyet fent.";return;}labels.forEach(l=>{const row=document.createElement("div");row.className="item";const meta=document.createElement("div");meta.className="meta";meta.textContent=l.value+" → "+l.text;const controls=document.createElement("div");const editB=document.createElement("button");editB.className="edit";editB.textContent="Szerkeszt";editB.addEventListener("click",()=>editLabel(l.id));const delB=document.createElement("button");delB.className="del";delB.textContent="Töröl";delB.addEventListener("click",()=>removeLabel(l.id));controls.appendChild(editB);controls.appendChild(delB);row.appendChild(meta);row.appendChild(controls);labelsList.appendChild(row);});}
+  function renderLabels(){meter.querySelectorAll(".label").forEach(n=>n.remove());labels.slice().reverse().forEach((l, index) => {const dom = createLabelDom(l);meter.appendChild(dom);const pos = computePosForValue(l.value, 12 + index * 5);dom.style.left = pos.left + "px";dom.style.top = pos.top + "px";dom.style.zIndex = index + 10;});}
 
   // CRUD
   function addLabelFromInputs(){
@@ -165,8 +109,7 @@
   labelsRef.on("value", snapshot=>{
     labels = [];
     snapshot.forEach(child => labels.push({...child.val(),id:child.key}));
-    renderList();
-    renderLabels();
+    renderList(); renderLabels();
   });
 </script>
 

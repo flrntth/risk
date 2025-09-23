@@ -70,14 +70,16 @@
 
   let labels = [];
 
-  function valueToAngleRad(v){
+function valueToAngleRad(v){
     let val = Number(v);
-    if(!isFinite(val)) val = NaN;
-    if(isNaN(val)) return Math.PI;
+    if(!isFinite(val)) val = 50; // alap közép
     if(val < 1) val = 1;
     if(val > 100) val = 100;
-    return Math.PI * (1 - (val-1)/99);
-  }
+    // -90° → 1, 0° → 50, +90° → 100
+    const angleDeg = -90 + ((val-1)/99) * 180;
+    return angleDeg * Math.PI / 180;
+}
+
 
   function computePosForValueUsingRect(v, rect, offset=6){
     const w = rect.width, h = rect.height, cx = w/2, cy = h;

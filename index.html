@@ -9,20 +9,12 @@
     body { font-family: Inter, system-ui, "Segoe UI", Roboto, Arial; margin:0; padding:20px;
       display:flex; flex-direction:column; gap:12px; align-items:center; background:#f6f7f9; }
     .controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center; }
-    .controls input[type="number"], .controls input[type="text"] {
-      padding:8px 10px; border-radius:8px; border:1px solid #d0d5dd; font-size:14px; min-width:120px;
-    }
+    .controls input[type="number"], .controls input[type="text"] { padding:8px 10px; border-radius:8px; border:1px solid #d0d5dd; font-size:14px; min-width:120px; }
     .controls button { padding:8px 12px; border-radius:8px; border:none; background:#2f80ed; color:white; cursor:pointer; font-weight:600; }
     .controls button.secondary { background:#6b7280; }
-    .meter-wrap { width:min(92vw,var(--max-width)); aspect-ratio:2/1; background-image:url("meter.png");
-      background-repeat:no-repeat; background-position:center bottom; background-size:contain;
-      position:relative; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); overflow:visible; }
-    .label { position:absolute; transform:translate(-50%,-50%); font-size:14px; font-weight:700;
-      pointer-events:auto; user-select:none; padding:4px 8px; border-radius:6px;
-      background:rgba(255,255,255,0.85); box-shadow:0 2px 8px rgba(16,24,40,0.08);
-      white-space:nowrap; cursor:default; }
-    .list { width:min(92vw,var(--max-width)); max-width:var(--max-width); background:white; border-radius:8px; padding:8px;
-      box-shadow:0 6px 18px rgba(16,24,40,0.06); display:grid; gap:6px; }
+    .meter-wrap { width:min(92vw,var(--max-width)); aspect-ratio:2/1; background-image:url("meter.png"); background-repeat:no-repeat; background-position:center bottom; background-size:contain; position:relative; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); overflow:visible; }
+    .label { position:absolute; transform:translate(-50%,-50%); font-size:14px; font-weight:700; pointer-events:auto; user-select:none; padding:4px 8px; border-radius:6px; background:rgba(255,255,255,0.85); box-shadow:0 2px 8px rgba(16,24,40,0.08); white-space:nowrap; cursor:default; }
+    .list { width:min(92vw,var(--max-width)); max-width:var(--max-width); background:white; border-radius:8px; padding:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); display:grid; gap:6px; }
     .item { display:flex; gap:8px; align-items:center; justify-content:space-between; }
     .item>.meta { font-weight:600; }
     .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
@@ -73,20 +65,20 @@
 
   function valueToAngleRad(v){
     let val = Number(v);
-    if(!isFinite(val)) val=1;
-    if(val<1) val=1;
-    if(val>100) val=100;
-    return Math.PI*(1-(val-1)/99);
+    if(!isFinite(val)) val = 1;
+    if(val < 1) val = 1;
+    if(val > 100) val = 100;
+    return Math.PI * (1 - (val - 1) / 99);
   }
 
-  function createLabelDom(obj){
-    const d=document.createElement("div");
-    d.className="label";
-    d.dataset.id=obj.id;
-    d.title="Dupla katt rá a szerkesztéshez";
-    d.innerHTML=obj.text;
-    d.addEventListener("dblclick",()=>editLabel(obj.id));
-    return d;
+  function computePosForValue(v, offset=12){
+    const rect = meter.getBoundingClientRect(),
+          w = rect.width, h = rect.height,
+          cx = w/2, cy = h, r = Math.min(w/2,h),
+          theta = valueToAngleRad(v),
+          x = cx + r * Math.cos(theta),
+          y = cy - r * Math.sin(theta);
+    return {left: x + offset*Math.cos(theta), top: y - offset*Math.sin(theta)};
   }
 
   function renderList(){
@@ -110,33 +102,26 @@
       delB.className="del";
       delB.textContent="Töröl";
       delB.addEventListener("click",()=>removeLabel(l.id));
-      controls.appendChild(editB);
-      controls.appendChild(delB);
-      row.appendChild(meta);
-      row.appendChild(controls);
+      controls.appendChild(editB); controls.appendChild(delB);
+      row.appendChild(meta); row.appendChild(controls);
       labelsList.appendChild(row);
     });
   }
 
   function renderLabels(){
+    // előző címkék törlése
     meter.querySelectorAll(".label").forEach(n=>n.remove());
 
-    const rect = meter.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
-    const cx = w/2, cy = h;
-    const r = Math.min(w/2,h);
-
+    // összes címke kirajzolása
     labels.forEach(l=>{
-      const dom=createLabelDom(l);
+      const dom=document.createElement("div");
+      dom.className="label";
+      dom.dataset.id=l.id;
+      dom.textContent=l.text;
       meter.appendChild(dom);
-
-      const theta=valueToAngleRad(l.value);
-      const x = cx + r*Math.cos(theta);
-      const y = cy - r*Math.sin(theta);
-
-      const offset=l.offset||12;
-      dom.style.left=(x + offset*Math.cos(theta))+"px";
-      dom.style.top =(y - offset*Math.sin(theta))+"px";
+      const pos=computePosForValue(l.value, l.offset||12);
+      dom.style.left=pos.left+"px";
+      dom.style.top=pos.top+"px";
     });
   }
 
@@ -156,7 +141,7 @@
     const cur = labels.find(l=>l.id===id);
     if(!cur) return;
     const newVal = Math.round(Number(prompt("Érték (1-100):", cur.value)));
-    if(!isFinite(newVal)||newVal<1||newVal>100){alert("Érvénytelen szám!"); return;}
+    if(!isFinite(newVal)||newVal<1||newVal>100) { alert("Érvénytelen szám!"); return; }
     const newTxt = prompt("Felirat szövege:", cur.text);
     if(newTxt===null) return;
     labelsRef.child(id).update({value:newVal,text:newTxt.trim()||cur.text});
@@ -178,8 +163,8 @@
 
   // Valós idejű frissítés
   labelsRef.on("value", snapshot=>{
-    labels=[];
-    snapshot.forEach(child=>labels.push({...child.val(),id:child.key}));
+    labels = [];
+    snapshot.forEach(child => labels.push({...child.val(),id:child.key}));
     renderList();
     renderLabels();
   });

@@ -85,8 +85,10 @@ function valueToNeedleAngle(v){
   let val = Number(v);
   if(val < 1) val = 1;
   if(val > 100) val = 100;
-  return (val - 50) * (Math.PI/100) * 2; // -90° ... 0° ... +90°
+  // 1 -> -90°, 50 -> 0°, 100 -> +90°
+  return ((val - 50) / 49) * (Math.PI / 2);
 }
+
 
 
 
@@ -100,7 +102,7 @@ function valueToNeedleAngle(v){
   }
 
 function updatePointer(value){
-  const angle = valueToNeedleAngle(value); // <<< EZT használd csak a mutatóhoz
+  const angle = valueToNeedleAngle(value);
   pointer.style.transform = `rotate(${angle}rad)`;
 }
 

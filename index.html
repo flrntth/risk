@@ -36,7 +36,6 @@
 
 <div class="meter-wrap" id="meter" aria-hidden="false"></div>
 <div class="list" id="labelsList"></div>
-<div class="debug" id="debugLog">Console-ban részletes logok (F12).</div>
 
 <!-- Firebase SDK (compat, GitHub Pages-hez egyszerű) -->
 <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
@@ -228,7 +227,6 @@
   labelsRef.on("value", snapshot => {
     console.clear();
     console.log("Realtime snapshot:", snapshot.val());
-    debugLog.textContent = "Utolsó snapshot: " + (new Date()).toLocaleTimeString();
 
     labels = [];
     snapshot.forEach(child => {
@@ -251,11 +249,9 @@
     renderLabels();
   }, err => {
     console.error("Realtime listener error:", err);
-    debugLog.textContent = "Realtime error: " + err.message;
   });
 
   // small helper: on load, show current DB url
-  console.log("Realtime DB URL:", firebaseConfig.databaseURL);
 </script>
 
 </body>

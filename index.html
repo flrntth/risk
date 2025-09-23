@@ -78,7 +78,7 @@
     return Math.PI * (1 - (val - 1)/99);
   }
 
-  function computePosForValueUsingRect(v, rect, offset=12){
+  function computePosForValueUsingRect(v, rect, offset=6){
     const w = rect.width, h = rect.height, cx = w/2, cy = h;
     const r = Math.min(w/2, h);
     const theta = valueToAngleRad(v);

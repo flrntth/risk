@@ -1,31 +1,29 @@
 <!doctype html>
 <html lang="hu">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kapcsolati Rizikóskála</title>
-  <style>
-    :root { --max-width: 760px; }
-    body { font-family: Inter, system-ui, "Segoe UI", Roboto, Arial; margin:0; padding:20px;
-      display:flex; flex-direction:column; gap:12px; align-items:center; background:#f6f7f9; }
-    .controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center; }
-    .controls input[type="number"], .controls input[type="text"] { padding:8px 10px; border-radius:8px; border:1px solid #d0d5dd; font-size:14px; min-width:120px; }
-    .controls button { padding:8px 12px; border-radius:8px; border:none; background:#2f80ed; color:white; cursor:pointer; font-weight:600; }
-    .controls button.secondary { background:#6b7280; }
-    .meter-wrap { width:min(75vw,var(--max-width)); aspect-ratio:2/1; background-image:url("meter.png"); background-repeat:no-repeat; background-position:center bottom; background-size:contain; position:relative; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); overflow:visible; }
-    .label { position:absolute; transform:translate(-50%,-50%); font-size:13px; font-weight:700; pointer-events:auto; user-select:none; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.95); box-shadow:0 2px 8px rgba(16,24,40,0.08); white-space:nowrap; cursor:default; border:1px solid rgba(0,0,0,0.06); }
-    .label.bad { background: #ffecec; border-color:#ff9b9b; }
-    .list { width:min(92vw,var(--max-width)); max-width:var(--max-width); background:white; border-radius:8px; padding:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); display:grid; gap:6px; }
-    .item { display:flex; gap:8px; align-items:center; justify-content:space-between; }
-    .item>.meta { font-weight:600; }
-    .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
-    .item button.edit { background:#f59e0b; color:white; }
-    .item button.del { background:#ef4444; color:white; }
-    .debug { width:min(92vw,var(--max-width)); max-width:var(--max-width); font-size:13px; color:#333; opacity:.8; }
-     @media (max-width:420px){.label{font-size:12px;padding:4px 6px;}.controls { flex-direction: column; align-items: stretch; gap: 6px; } .controls input, .controls button { width: 100%; min-width: unset; }
-}
-
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kapcsolati Rizikóskála</title>
+<style>
+:root { --max-width: 760px; }
+body { font-family: Inter, system-ui, "Segoe UI", Roboto, Arial; margin:0; padding:20px;
+  display:flex; flex-direction:column; gap:12px; align-items:center; background:#f6f7f9; }
+.controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center; }
+.controls input[type="number"], .controls input[type="text"] { padding:8px 10px; border-radius:8px; border:1px solid #d0d5dd; font-size:14px; min-width:120px; }
+.controls button { padding:8px 12px; border-radius:8px; border:none; background:#2f80ed; color:white; cursor:pointer; font-weight:600; }
+.controls button.secondary { background:#6b7280; }
+.meter-wrap { width:min(75vw,var(--max-width)); aspect-ratio:2/1; background-image:url("meter.png"); background-repeat:no-repeat; background-position:center bottom; background-size:contain; position:relative; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); overflow:visible; }
+.label { position:absolute; transform:translate(-50%,-50%); font-size:13px; font-weight:700; pointer-events:auto; user-select:none; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.95); box-shadow:0 2px 8px rgba(16,24,40,0.08); white-space:nowrap; cursor:default; border:1px solid rgba(0,0,0,0.06); }
+.label.bad { background: #ffecec; border-color:#ff9b9b; }
+.list { width:min(92vw,var(--max-width)); max-width:var(--max-width); background:white; border-radius:8px; padding:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); display:grid; gap:6px; }
+.item { display:flex; gap:8px; align-items:center; justify-content:space-between; cursor:pointer; }
+.item>.meta { font-weight:600; }
+.item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
+.item button.edit { background:#f59e0b; color:white; }
+.item button.del { background:#ef4444; color:white; }
+.pointer { position:absolute; width:4px; height:50%; background:red; transform-origin:bottom center; z-index:20; transition: all 0.3s ease; pointer-events:none; }
+@media (max-width:420px){.label{font-size:12px;padding:4px 6px;}.controls { flex-direction: column; align-items: stretch; gap: 6px; } .controls input, .controls button { width: 100%; min-width: unset; }}
+</style>
 </head>
 <body>
 
@@ -39,215 +37,150 @@
 <div class="meter-wrap" id="meter" aria-hidden="false"></div>
 <div class="list" id="labelsList"></div>
 
-<!-- Firebase SDK (compat, GitHub Pages-hez egyszerű) -->
 <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-database-compat.js"></script>
 
 <script>
-  /* ---------- Firebase init (cseréld ha más config kell) ---------- */
-  const firebaseConfig = {
-    apiKey: "AIzaSyC8Bv0tvQmUUQqluY0J0DEL2ZKTFgibWE8",
-    authDomain: "risk-183e9.firebaseapp.com",
-    databaseURL: "https://risk-183e9-default-rtdb.firebaseio.com/",
-    projectId: "risk-183e9",
-    storageBucket: "risk-183e9.appspot.com",
-    messagingSenderId: "63059763527",
-    appId: "1:63059763527:web:6272d43b2eee843d8aac62"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const labelsRef = db.ref("labels");
+const firebaseConfig = {
+  apiKey: "AIzaSyC8Bv0tvQmUUQqluY0J0DEL2ZKTFgibWE8",
+  authDomain: "risk-183e9.firebaseapp.com",
+  databaseURL: "https://risk-183e9-default-rtdb.firebaseio.com/",
+  projectId: "risk-183e9",
+  storageBucket: "risk-183e9.appspot.com",
+  messagingSenderId: "63059763527",
+  appId: "1:63059763527:web:6272d43b2eee843d8aac62"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const labelsRef = db.ref("labels");
 
-  /* ---------- DOM refs ---------- */
-  const meter = document.getElementById("meter");
-  const addBtn = document.getElementById("addBtn");
-  const valueInput = document.getElementById("valueInput");
-  const textInput = document.getElementById("textInput");
-  const labelsList = document.getElementById("labelsList");
-  const debugLog = document.getElementById("debugLog");
+const meter = document.getElementById("meter");
+const addBtn = document.getElementById("addBtn");
+const valueInput = document.getElementById("valueInput");
+const textInput = document.getElementById("textInput");
+const labelsList = document.getElementById("labelsList");
 
-  let labels = [];
+let labels = [];
 
-  /* ---------- helper: angle/position ---------- */
-  function valueToAngleRad(v){
-    let val = Number(v);
-    if(!isFinite(val)) val = NaN;
-    if(isNaN(val)) return Math.PI; // ha nincs érték, bal alul
-    if(val < 1) val = 1;
-    if(val > 100) val = 100;
-    return Math.PI * (1 - (val - 1)/99);
+// óraszerű mutató
+let pointer = document.createElement("div");
+pointer.className = "pointer";
+meter.appendChild(pointer);
+
+function valueToAngleRad(v){
+  let val = Number(v);
+  if(!isFinite(val)) val = NaN;
+  if(isNaN(val)) return Math.PI;
+  if(val < 1) val = 1;
+  if(val > 100) val = 100;
+  return Math.PI * (1 - (val - 1)/99);
+}
+
+function computePosForValueUsingRect(v, rect, offset=6){
+  const w = rect.width, h = rect.height, cx = w/2, cy = h;
+  const r = Math.min(w/2, h);
+  const theta = valueToAngleRad(v);
+  const x = cx + r * Math.cos(theta);
+  const y = cy - r * Math.sin(theta);
+  return { theta, x, y, r, cx, cy };
+}
+
+function renderList(){
+  labelsList.innerHTML = "";
+  if(labels.length === 0){
+    labelsList.textContent = "Nincsenek feliratok — adj hozzá egyet fent.";
+    return;
   }
+  labels.forEach(l=>{
+    const row = document.createElement("div");
+    row.className = "item";
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    meta.textContent = `${l.value ?? "(no value)"} → ${l.text ?? ""}`;
+    const controls = document.createElement("div");
+    const editB = document.createElement("button"); editB.className="edit"; editB.textContent="Szerkeszt";
+    editB.addEventListener("click", ()=> editLabel(l.id) );
+    const delB = document.createElement("button"); delB.className="del"; delB.textContent="Töröl";
+    delB.addEventListener("click", ()=> removeLabel(l.id) );
+    controls.appendChild(editB); controls.appendChild(delB);
+    row.appendChild(meta); row.appendChild(controls);
 
-  function computePosForValueUsingRect(v, rect, offset=6){
-    const w = rect.width, h = rect.height, cx = w/2, cy = h;
-    const r = Math.min(w/2, h);
-    const theta = valueToAngleRad(v);
-    const x = cx + r * Math.cos(theta);
-    const y = cy - r * Math.sin(theta);
-    return { theta, x, y, left: x + offset*Math.cos(theta), top: y - offset*Math.sin(theta), r, cx, cy };
-  }
-
-  /* ---------- render list on the right ---------- */
-  function renderList(){
-    labelsList.innerHTML = "";
-    if(labels.length === 0){
-      labelsList.textContent = "Nincsenek feliratok — adj hozzá egyet fent.";
-      return;
-    }
-    labels.forEach(l=>{
-      const row = document.createElement("div");
-      row.className = "item";
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = `${l.value ?? "(no value)"} → ${l.text ?? ""}`;
-      const controls = document.createElement("div");
-      const editB = document.createElement("button"); editB.className="edit"; editB.textContent="Szerkeszt";
-      editB.addEventListener("click", ()=> editLabel(l.id) );
-      const delB = document.createElement("button"); delB.className="del"; delB.textContent="Töröl";
-      delB.addEventListener("click", ()=> removeLabel(l.id) );
-      controls.appendChild(editB); controls.appendChild(delB);
-      row.appendChild(meta); row.appendChild(controls);
-      labelsList.appendChild(row);
-    });
-  }
-
-  /* ---------- render labels on meter (no overlap: small radial spread if same spot) ---------- */
-  function renderLabels(){
-    // töröljük meglévő label DOM-okat
-    meter.querySelectorAll(".label").forEach(n => n.remove());
-
-    if(labels.length === 0) return;
-
-    // get bounding rect ONCE
-    const rect = meter.getBoundingClientRect();
-    if(rect.width === 0 || rect.height === 0){
-      // ha még nem renderelt a meter (ritkán), újrapróbáljuk később
-      console.warn("meter rect 0x0 — késleltetett render");
-      setTimeout(renderLabels, 100);
-      return;
-    }
-
-    // számoljuk ki az alap pozíciókat
-    const positions = labels.map((l, i) => {
-      const p = computePosForValueUsingRect(l.value, rect, 12);
-      return { idx:i, id:l.id, data:l, ...p };
+    // kattintásra a mutató ide ugrik
+    row.addEventListener("click", () => {
+      const rect = meter.getBoundingClientRect();
+      const pos = computePosForValueUsingRect(l.value, rect);
+      const angleDeg = pos.theta * 180 / Math.PI;
+      pointer.style.transform = `rotate(${angleDeg}deg)`;
     });
 
-    // csoportosítás közelítő koordináta kulccsal (roundolunk)
-    const groups = {};
-    positions.forEach(pos => {
-      const key = `${Math.round(pos.x)}_${Math.round(pos.y)}`;
-      if(!groups[key]) groups[key] = [];
-      groups[key].push(pos);
-    });
-
-    // kirajzolás: ha csoportban többen vannak, szétterítjük őket radially
-    Object.values(groups).forEach(group => {
-      const n = group.length;
-      group.forEach((pos, j) => {
-        // extra radial offset ha többen vannak ugyanezen a helyen
-        let extraR = 0;
-        if(n > 1){
-          // terítsük szét: középre igazítva
-          const step = 14; // pixelenként távolabb
-          extraR = (j - (n-1)/2) * step;
-        }
-        const r2 = pos.r + extraR;
-        const x2 = pos.cx + r2 * Math.cos(pos.theta);
-        const y2 = pos.cy - r2 * Math.sin(pos.theta);
-        const left = x2 + (pos.left - pos.x); // tartsa meg az offset eredetit
-        const top  = y2 + (pos.top - pos.y);
-
-        const dom = document.createElement("div");
-        dom.className = "label";
-        // ha value hiányzik, jelezzük vizuálisan
-        if( !isFinite(Number(pos.data.value)) ){
-          dom.classList.add("bad");
-          dom.textContent = `${pos.data.text ?? "(no text)"} — (no value)`;
-          console.warn("Label without numeric value:", pos.data, "id:", pos.id);
-        } else {
-          dom.textContent = `${pos.data.text ?? ""}`;
-        }
-        dom.dataset.id = pos.id;
-        dom.title = `érték: ${pos.data.value} · id: ${pos.id}`;
-        dom.addEventListener("dblclick", ()=> editLabel(pos.id));
-        dom.style.left = Math.round(left) + "px";
-        dom.style.top  = Math.round(top)  + "px";
-        meter.appendChild(dom);
-      });
-    });
-  }
-
-  /* ---------- CRUD ---------- */
-  function addLabelFromInputs(){
-    const vRaw = valueInput.value;
-    const txt = textInput.value.trim();
-    if(!txt){ alert("Adj meg egy feliratot!"); return; }
-    const v = Math.round(Number(vRaw));
-    if(!isFinite(v) || v < 1 || v > 100){ alert("Adj meg egy érvényes számot 1 és 100 között!"); return; }
-    const newRef = labelsRef.push();
-    const obj = { value: v, text: txt, createdAt: Date.now() };
-    newRef.set(obj).then(()=> {
-      console.log("Saved new label:", newRef.key, obj);
-    }).catch(err=>{
-      console.error("Save error:", err);
-      alert("Hiba a mentésnél (nézd a konzolt).");
-    });
-    valueInput.value = ""; textInput.value = "";
-  }
-
-  function editLabel(id){
-    const cur = labels.find(l => l.id === id);
-    if(!cur) return;
-    const newValRaw = prompt("Érték (1-100):", cur.value);
-    if(newValRaw === null) return;
-    const newVal = Math.round(Number(newValRaw));
-    if(!isFinite(newVal) || newVal < 1 || newVal > 100){ alert("Érvénytelen szám!"); return; }
-    const newTxt = prompt("Felirat szövege:", cur.text);
-    if(newTxt === null) return;
-    labelsRef.child(id).update({ value: newVal, text: newTxt.trim() || cur.text })
-      .then(()=> console.log("Updated", id))
-      .catch(err => console.error("Update error", err));
-  }
-
-  function removeLabel(id){
-    if(!confirm("Biztos törlöd ezt a feliratot?")) return;
-    labelsRef.child(id).remove().then(()=> console.log("Removed", id)).catch(e=>console.error(e));
-  }
-
-  addBtn.addEventListener("click", addLabelFromInputs);
-  window.addEventListener("resize", renderLabels);
-  meter.addEventListener("dblclick", ()=> valueInput.focus());
-
-  /* ---------- Realtime listener & debug logs ---------- */
-  labelsRef.on("value", snapshot => {
-    console.clear();
-    console.log("Realtime snapshot:", snapshot.val());
-
-    labels = [];
-    snapshot.forEach(child => {
-      const data = child.val();
-      console.log(" child:", child.key, data);
-      // Ensure numeric value where possible
-      if(data && data.value !== undefined){
-        // keep as-is
-      } else {
-        // no value present — log it
-        console.warn("Child missing 'value':", child.key, data);
-      }
-      labels.push({...data, id: child.key});
-    });
-
-    // sort by value
-    labels.sort((a, b) => (a.value || 0) - (b.value || 0));
-
-    renderList();
-    renderLabels();
-  }, err => {
-    console.error("Realtime listener error:", err);
+    labelsList.appendChild(row);
   });
+}
 
-  // small helper: on load, show current DB url
+function renderLabels(){
+  meter.querySelectorAll(".label").forEach(n => n.remove());
+  if(labels.length === 0) return;
+  const rect = meter.getBoundingClientRect();
+  const positions = labels.map(l=>{
+    const p = computePosForValueUsingRect(l.value, rect, 12);
+    return { id:l.id, data:l, ...p };
+  });
+  positions.forEach(pos=>{
+    const dom = document.createElement("div");
+    dom.className = "label";
+    dom.textContent = pos.data.text ?? "";
+    dom.dataset.id = pos.id;
+    dom.title = `érték: ${pos.data.value} · id: ${pos.id}`;
+    dom.addEventListener("dblclick", ()=> editLabel(pos.id));
+    dom.style.left = Math.round(pos.cx + pos.r * Math.cos(pos.theta)) + "px";
+    dom.style.top  = Math.round(pos.cy - pos.r * Math.sin(pos.theta)) + "px";
+    meter.appendChild(dom);
+  });
+}
+
+function addLabelFromInputs(){
+  const vRaw = valueInput.value;
+  const txt = textInput.value.trim();
+  if(!txt){ alert("Adj meg egy feliratot!"); return; }
+  const v = Math.round(Number(vRaw));
+  if(!isFinite(v) || v < 1 || v > 100){ alert("Adj meg egy érvényes számot 1 és 100 között!"); return; }
+  const newRef = labelsRef.push();
+  const obj = { value: v, text: txt, createdAt: Date.now() };
+  newRef.set(obj);
+  valueInput.value = ""; textInput.value = "";
+}
+
+function editLabel(id){
+  const cur = labels.find(l => l.id === id);
+  if(!cur) return;
+  const newValRaw = prompt("Érték (1-100):", cur.value);
+  if(newValRaw === null) return;
+  const newVal = Math.round(Number(newValRaw));
+  if(!isFinite(newVal) || newVal < 1 || newVal > 100){ alert("Érvénytelen szám!"); return; }
+  const newTxt = prompt("Felirat szövege:", cur.text);
+  if(newTxt === null) return;
+  labelsRef.child(id).update({ value: newVal, text: newTxt.trim() || cur.text });
+}
+
+function removeLabel(id){
+  if(!confirm("Biztos törlöd ezt a feliratot?")) return;
+  labelsRef.child(id).remove();
+}
+
+addBtn.addEventListener("click", addLabelFromInputs);
+window.addEventListener("resize", renderLabels);
+meter.addEventListener("dblclick", ()=> valueInput.focus());
+
+labelsRef.on("value", snapshot => {
+  labels = [];
+  snapshot.forEach(child => {
+    const data = child.val();
+    labels.push({...data, id: child.key});
+  });
+  labels.sort((a, b) => (a.value || 0) - (b.value || 0));
+  renderList();
+  renderLabels();
+}, err => { console.error(err); });
 </script>
 
 </body>

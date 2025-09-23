@@ -31,7 +31,6 @@
   <input id="valueInput" type="number" min="1" max="100" placeholder="Érték (1-100)" />
   <input id="textInput" type="text" placeholder="Felirat" />
   <button id="addBtn">Hozzáadás</button>
-  <button id="clearBtn" class="secondary">Összes törlése</button>
 </div>
 
 <div class="meter-wrap" id="meter" aria-hidden="false"></div>
@@ -59,7 +58,6 @@
   /* ---------- DOM refs ---------- */
   const meter = document.getElementById("meter");
   const addBtn = document.getElementById("addBtn");
-  const clearBtn = document.getElementById("clearBtn");
   const valueInput = document.getElementById("valueInput");
   const textInput = document.getElementById("textInput");
   const labelsList = document.getElementById("labelsList");
@@ -213,11 +211,6 @@
     if(!confirm("Biztos törlöd ezt a feliratot?")) return;
     labelsRef.child(id).remove().then(()=> console.log("Removed", id)).catch(e=>console.error(e));
   }
-
-  clearBtn.addEventListener("click", ()=>{
-    if(!confirm("Összes felirat törlése?")) return;
-    labelsRef.remove().then(()=> console.log("All removed")).catch(e=>console.error(e));
-  });
 
   addBtn.addEventListener("click", addLabelFromInputs);
   window.addEventListener("resize", renderLabels);

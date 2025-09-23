@@ -99,10 +99,11 @@ function valueToNeedleAngle(v){
     return { theta, x, y, left: x + offset*Math.cos(theta), top: y - offset*Math.sin(theta), r, cx, cy };
   }
 
-  function updatePointer(value){
-    const angle = valueToAngleRad(value);
-    pointer.style.transform = `rotate(${angle}rad)`;
-  }
+function updatePointer(value){
+  const angle = valueToNeedleAngle(value); // <<< EZT használd csak a mutatóhoz
+  pointer.style.transform = `rotate(${angle}rad)`;
+}
+
 
   function renderList(){
     labelsList.innerHTML = "";

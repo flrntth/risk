@@ -238,8 +238,8 @@
       labels.push({...data, id: child.key});
     });
 
-    // sort by createdAt (if present) to keep stable order, newest last
-    labels.sort((a,b)=> (a.createdAt||0) - (b.createdAt||0));
+    // sort by value
+    labels.sort((a, b) => (a.value || 0) - (b.value || 0));
 
     renderList();
     renderLabels();

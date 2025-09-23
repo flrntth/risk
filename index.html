@@ -67,14 +67,13 @@ let pointer = document.createElement("div");
 pointer.className = "pointer";
 meter.appendChild(pointer);
 
-// átszámítás 1-100 -> -90° és +90° (félkör)
+// 1-100 -> -90° balra, +90° jobbra
 function valueToAngleRad(v){
   let val = Number(v);
   if(!isFinite(val)) val = 50;
   if(val < 1) val = 1;
   if(val > 100) val = 100;
-  // -90° (bal) -> +90° (jobb)
-  return (val - 50) * Math.PI / 100; // -0.5π ... +0.5π rad
+  return (val - 50) * Math.PI / 50; // -π/2 ... +π/2
 }
 
 function renderList(){
@@ -97,7 +96,6 @@ function renderList(){
     controls.appendChild(editB); controls.appendChild(delB);
     row.appendChild(meta); row.appendChild(controls);
 
-    // pointer ide ugrik
     row.addEventListener("click", () => {
       const angle = valueToAngleRad(l.value);
       pointer.style.transform = `rotate(${angle}rad)`;
@@ -112,13 +110,14 @@ function renderLabels(){
   if(labels.length === 0) return;
 
   const rect = meter.getBoundingClientRect();
-  const cx = rect.width/2, cy = rect.height;
+  const cx = rect.width/2;       // kép alsó közép X
+  const cy = rect.height;        // kép alsó széle Y (forgástengely)
 
   labels.forEach(l=>{
     const theta = valueToAngleRad(l.value);
-    const r = Math.min(cx, cy) * 0.9; // radius
-    const x = cx + r * Math.sin(theta);
-    const y = cy - r * Math.cos(theta);
+    const radius = Math.min(cx, cy) * 0.9;
+    const x = cx + radius * Math.sin(theta);
+    const y = cy - radius * Math.cos(theta);
 
     const dom = document.createElement("div");
     dom.className = "label";

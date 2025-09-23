@@ -21,7 +21,25 @@
     .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
     .item button.edit { background:#f59e0b; color:white; }
     .item button.del { background:#ef4444; color:white; }
-    .pointer { position:absolute; width:4px; height:50%; background:red; bottom:8px; left:50%; transform-origin:bottom center; transform:rotate(180deg); pointer-events:none; z-index:20; }
+   
+    .pointer {
+  position: absolute;
+  width: 0; /* nem kell szélesség, mert a háromszög formát borderek adják */
+  height: 0;
+  bottom: 8px;
+  left: 50%;
+  transform-origin: bottom center;
+  transform: rotate(180deg);
+  pointer-events: none;
+  z-index: 20;
+
+  /* Háromszög formája */
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 50px solid red; /* ez a tű színe és hossza */
+}
+
+    
     .debug { width:min(92vw,var(--max-width)); max-width:var(--max-width); font-size:13px; color:#333; opacity:.8; }
     @media (max-width:420px){
       .label{font-size:12px;padding:4px 6px;}

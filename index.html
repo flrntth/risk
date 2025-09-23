@@ -21,10 +21,13 @@
     .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
     .item button.edit { background:#f59e0b; color:white; }
     .item button.del { background:#ef4444; color:white; }
+    .pointer { position:absolute; width:4px; height:50%; background:red; bottom:0; left:50%; transform-origin:bottom center; transform:rotate(180deg); pointer-events:none; z-index:20; }
     .debug { width:min(92vw,var(--max-width)); max-width:var(--max-width); font-size:13px; color:#333; opacity:.8; }
-     @media (max-width:420px){.label{font-size:12px;padding:4px 6px;}.controls { flex-direction: column; align-items: stretch; gap: 6px; } .controls input, .controls button { width: 100%; min-width: unset; }
-}
-
+    @media (max-width:420px){
+      .label{font-size:12px;padding:4px 6px;}
+      .controls { flex-direction: column; align-items: stretch; gap: 6px; }
+      .controls input, .controls button { width: 100%; min-width: unset; }
+    }
   </style>
 </head>
 <body>
@@ -36,15 +39,15 @@
   <button id="addBtn">Hozzáadás</button>
 </div>
 
-<div class="meter-wrap" id="meter" aria-hidden="false"></div>
+<div class="meter-wrap" id="meter" aria-hidden="false">
+  <div class="pointer" id="pointer"></div>
+</div>
 <div class="list" id="labelsList"></div>
 
-<!-- Firebase SDK (compat, GitHub Pages-hez egyszerű) -->
 <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-database-compat.js"></script>
 
 <script>
-  /* ---------- Firebase init (cseréld ha más config kell) ---------- */
   const firebaseConfig = {
     apiKey: "AIzaSyC8Bv0tvQmUUQqluY0J0DEL2ZKTFgibWE8",
     authDomain: "risk-183e9.firebaseapp.com",
@@ -58,24 +61,22 @@
   const db = firebase.database();
   const labelsRef = db.ref("labels");
 
-  /* ---------- DOM refs ---------- */
   const meter = document.getElementById("meter");
   const addBtn = document.getElementById("addBtn");
   const valueInput = document.getElementById("valueInput");
   const textInput = document.getElementById("textInput");
   const labelsList = document.getElementById("labelsList");
-  const debugLog = document.getElementById("debugLog");
+  const pointer = document.getElementById("pointer");
 
   let labels = [];
 
-  /* ---------- helper: angle/position ---------- */
   function valueToAngleRad(v){
     let val = Number(v);
     if(!isFinite(val)) val = NaN;
-    if(isNaN(val)) return Math.PI; // ha nincs érték, bal alul
+    if(isNaN(val)) return Math.PI;
     if(val < 1) val = 1;
     if(val > 100) val = 100;
-    return Math.PI * (1 - (val - 1)/99);
+    return Math.PI * (1 - (val-1)/99);
   }
 
   function computePosForValueUsingRect(v, rect, offset=6){
@@ -87,7 +88,11 @@
     return { theta, x, y, left: x + offset*Math.cos(theta), top: y - offset*Math.sin(theta), r, cx, cy };
   }
 
-  /* ---------- render list on the right ---------- */
+  function updatePointer(value){
+    const angle = valueToAngleRad(value);
+    pointer.style.transform = `rotate(${angle}rad)`;
+  }
+
   function renderList(){
     labelsList.innerHTML = "";
     if(labels.length === 0){
@@ -107,64 +112,47 @@
       delB.addEventListener("click", ()=> removeLabel(l.id) );
       controls.appendChild(editB); controls.appendChild(delB);
       row.appendChild(meta); row.appendChild(controls);
+      row.addEventListener("click", ()=> updatePointer(l.value)); // kattintáskor mutató
       labelsList.appendChild(row);
     });
   }
 
-  /* ---------- render labels on meter (no overlap: small radial spread if same spot) ---------- */
   function renderLabels(){
-    // töröljük meglévő label DOM-okat
     meter.querySelectorAll(".label").forEach(n => n.remove());
-
     if(labels.length === 0) return;
-
-    // get bounding rect ONCE
     const rect = meter.getBoundingClientRect();
     if(rect.width === 0 || rect.height === 0){
-      // ha még nem renderelt a meter (ritkán), újrapróbáljuk később
-      console.warn("meter rect 0x0 — késleltetett render");
       setTimeout(renderLabels, 100);
       return;
     }
-
-    // számoljuk ki az alap pozíciókat
     const positions = labels.map((l, i) => {
       const p = computePosForValueUsingRect(l.value, rect, 12);
       return { idx:i, id:l.id, data:l, ...p };
     });
-
-    // csoportosítás közelítő koordináta kulccsal (roundolunk)
     const groups = {};
     positions.forEach(pos => {
       const key = `${Math.round(pos.x)}_${Math.round(pos.y)}`;
       if(!groups[key]) groups[key] = [];
       groups[key].push(pos);
     });
-
-    // kirajzolás: ha csoportban többen vannak, szétterítjük őket radially
     Object.values(groups).forEach(group => {
       const n = group.length;
       group.forEach((pos, j) => {
-        // extra radial offset ha többen vannak ugyanezen a helyen
         let extraR = 0;
         if(n > 1){
-          // terítsük szét: középre igazítva
-          const step = 14; // pixelenként távolabb
+          const step = 14;
           extraR = (j - (n-1)/2) * step;
         }
         const r2 = pos.r + extraR;
         const x2 = pos.cx + r2 * Math.cos(pos.theta);
         const y2 = pos.cy - r2 * Math.sin(pos.theta);
-        const left = x2 + (pos.left - pos.x); // tartsa meg az offset eredetit
+        const left = x2 + (pos.left - pos.x);
         const top  = y2 + (pos.top - pos.y);
-
         const dom = document.createElement("div");
         dom.className = "label";
-        // ha value hiányzik, jelezzük vizuálisan
-        if( !isFinite(Number(pos.data.value)) ){
+        if(!isFinite(Number(pos.data.value))){
           dom.classList.add("bad");
           dom.textContent = `${pos.data.text ?? "(no text)"} — (no value)`;
-          console.warn("Label without numeric value:", pos.data, "id:", pos.id);
         } else {
           dom.textContent = `${pos.data.text ?? ""}`;
         }
@@ -178,7 +166,6 @@
     });
   }
 
-  /* ---------- CRUD ---------- */
   function addLabelFromInputs(){
     const vRaw = valueInput.value;
     const txt = textInput.value.trim();
@@ -189,6 +176,7 @@
     const obj = { value: v, text: txt, createdAt: Date.now() };
     newRef.set(obj).then(()=> {
       console.log("Saved new label:", newRef.key, obj);
+      updatePointer(v); // új feliratnál is mutató
     }).catch(err=>{
       console.error("Save error:", err);
       alert("Hiba a mentésnél (nézd a konzolt).");
@@ -206,7 +194,7 @@
     const newTxt = prompt("Felirat szövege:", cur.text);
     if(newTxt === null) return;
     labelsRef.child(id).update({ value: newVal, text: newTxt.trim() || cur.text })
-      .then(()=> console.log("Updated", id))
+      .then(()=> { console.log("Updated", id); updatePointer(newVal); })
       .catch(err => console.error("Update error", err));
   }
 
@@ -219,35 +207,17 @@
   window.addEventListener("resize", renderLabels);
   meter.addEventListener("dblclick", ()=> valueInput.focus());
 
-  /* ---------- Realtime listener & debug logs ---------- */
   labelsRef.on("value", snapshot => {
-    console.clear();
-    console.log("Realtime snapshot:", snapshot.val());
-
     labels = [];
     snapshot.forEach(child => {
       const data = child.val();
-      console.log(" child:", child.key, data);
-      // Ensure numeric value where possible
-      if(data && data.value !== undefined){
-        // keep as-is
-      } else {
-        // no value present — log it
-        console.warn("Child missing 'value':", child.key, data);
-      }
       labels.push({...data, id: child.key});
     });
-
-    // sort by value
-    labels.sort((a, b) => (a.value || 0) - (b.value || 0));
-
+    labels.sort((a,b)=>(a.value||0)-(b.value||0));
     renderList();
     renderLabels();
-  }, err => {
-    console.error("Realtime listener error:", err);
+    if(labels.length) updatePointer(labels[0].value); // alap mutató
   });
-
-  // small helper: on load, show current DB url
 </script>
 
 </body>

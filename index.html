@@ -1,62 +1,70 @@
 <!doctype html>
 <html lang="hu">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Risk meter</title>
-  <style>
-    :root { --max-width: 760px; }
-    body {
-      font-family: Inter, system-ui, "Segoe UI", Roboto, Arial;
-      margin:0; padding:20px;
-      display:flex; flex-direction:column; gap:12px; align-items:center;
-      background:#f6f7f9;
-    }
-    .controls {
-      display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:center;
-    }
-    .controls input[type="number"], .controls input[type="text"] {
-      padding:8px 10px; border-radius:8px; border:1px solid #d0d5dd;
-      font-size:14px; min-width:120px;
-    }
-    .controls button {
-      padding:8px 12px; border-radius:8px; border:none; background:#2f80ed;
-      color:white; cursor:pointer; font-weight:600;
-    }
-    .controls button.secondary { background:#6b7280; }
-    .meter-wrap {
-      width:min(85vw,var(--max-width)); /* kisebb, hogy mobilon se lógjon ki */
-      aspect-ratio:2/1;
-      background-image:url("meter.png");
-      background-repeat:no-repeat;
-      background-position:center bottom;
-      background-size:contain;
-      position:relative; border-radius:8px;
-      box-shadow:0 6px 18px rgba(16,24,40,0.06);
-      overflow:visible;
-    }
-    .label {
-      position:absolute; transform:translate(-50%,-50%);
-      font-size:13px; font-weight:700; pointer-events:auto; user-select:none;
-      padding:6px 8px; border-radius:6px;
-      background:rgba(255,255,255,0.95);
-      box-shadow:0 2px 8px rgba(16,24,40,0.08);
-      white-space:nowrap; cursor:default; border:1px solid rgba(0,0,0,0.06);
-    }
-    .label.bad { background:#ffecec; border-color:#ff9b9b; }
-    .list {
-      width:min(92vw,var(--max-width)); max-width:var(--max-width);
-      background:white; border-radius:8px; padding:8px;
-      box-shadow:0 6px 18px rgba(16,24,40,0.06);
-      display:grid; gap:6px;
-    }
-    .item { display:flex; gap:8px; align-items:center; justify-content:space-between; }
-    .item>.meta { font-weight:600; }
-    .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
-    .item button.edit { background:#f59e0b; color:white; }
-    .item button.del { background:#ef4444; color:white; }
-    @media (max-width:420px){ .label{font-size:12px;padding:4px 6px;} .controls input{min-width:92px;} }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Risk meter</title>
+<style>
+  :root { --max-width: 760px; }
+  body {
+    font-family: Inter, system-ui, "Segoe UI", Roboto, Arial;
+    margin:0; padding:20px;
+    display:flex; flex-direction:column; gap:12px; align-items:center;
+    background:#f6f7f9;
+  }
+  .controls {
+    display:flex; flex-wrap:wrap; gap:8px;
+    align-items:center; justify-content:center;
+    width:100%;
+    max-width:var(--max-width);
+  }
+  .controls input[type="number"],
+  .controls input[type="text"] {
+    padding:8px 10px; border-radius:8px; border:1px solid #d0d5dd;
+    font-size:14px; flex:1 1 100px; min-width:90px;
+  }
+  .controls button {
+    padding:8px 12px; border-radius:8px; border:none; background:#2f80ed;
+    color:white; cursor:pointer; font-weight:600; flex:1 1 100px; min-width:90px;
+  }
+  .meter-wrap {
+    width:min(85vw,var(--max-width));
+    aspect-ratio:2/1;
+    background-image:url("meter.png");
+    background-repeat:no-repeat;
+    background-position:center bottom;
+    background-size:contain;
+    position:relative; border-radius:8px;
+    box-shadow:0 6px 18px rgba(16,24,40,0.06);
+    overflow:visible;
+  }
+  .label {
+    position:absolute; transform:translate(-50%,-50%);
+    font-size:13px; font-weight:700;
+    pointer-events:auto; user-select:none;
+    padding:6px 8px; border-radius:6px;
+    background:rgba(255,255,255,0.95);
+    box-shadow:0 2px 8px rgba(16,24,40,0.08);
+    white-space:nowrap; cursor:default;
+    border:1px solid rgba(0,0,0,0.06);
+  }
+  .list {
+    width:min(92vw,var(--max-width));
+    max-width:var(--max-width);
+    background:white; border-radius:8px; padding:8px;
+    box-shadow:0 6px 18px rgba(16,24,40,0.06);
+    display:grid; gap:6px;
+  }
+  .item { display:flex; gap:8px; align-items:center; justify-content:space-between; }
+  .item>.meta { font-weight:600; }
+  .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
+  .item button.edit { background:#f59e0b; color:white; }
+  .item button.del { background:#ef4444; color:white; }
+  @media (max-width:420px){
+    .label{font-size:12px;padding:4px 6px;}
+    .controls{flex-direction:column; align-items:stretch;}
+  }
+</style>
 </head>
 <body>
 
@@ -64,13 +72,11 @@
   <input id="valueInput" type="number" min="1" max="100" placeholder="Érték (1-100)" />
   <input id="textInput" type="text" placeholder="Felirat" />
   <button id="addBtn">Hozzáadás</button>
-  <button id="clearBtn" class="secondary">Összes törlése</button>
 </div>
 
 <div class="meter-wrap" id="meter"></div>
 <div class="list" id="labelsList"></div>
 
-<!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-database-compat.js"></script>
 
@@ -90,7 +96,6 @@ const labelsRef = db.ref("labels");
 
 const meter = document.getElementById("meter");
 const addBtn = document.getElementById("addBtn");
-const clearBtn = document.getElementById("clearBtn");
 const valueInput = document.getElementById("valueInput");
 const textInput = document.getElementById("textInput");
 const labelsList = document.getElementById("labelsList");
@@ -98,35 +103,33 @@ const labelsList = document.getElementById("labelsList");
 let labels = [];
 
 function valueToAngleRad(v){
-  let val = Number(v);
-  if(!isFinite(val)) val = NaN;
+  let val = Number(v); if(!isFinite(val)) val = NaN;
   if(isNaN(val)) return Math.PI;
-  if(val < 1) val = 1;
-  if(val > 100) val = 100;
-  return Math.PI * (1 - (val - 1)/99);
+  if(val<1) val=1; if(val>100) val=100;
+  return Math.PI*(1-(val-1)/99);
 }
 
 function computePosForValueUsingRect(v, rect, offset=12){
-  const w = rect.width, h = rect.height, cx = w/2, cy = h;
-  const r = Math.min(w/2,h) * 0.95; // kisebb sugár, hogy ne lógjon ki
-  const theta = valueToAngleRad(v);
-  const x = cx + r * Math.cos(theta);
-  const y = cy - r * Math.sin(theta);
-  return { theta, x, y, left: x + offset*Math.cos(theta), top: y - offset*Math.sin(theta), r, cx, cy };
+  const w=rect.width,h=rect.height,cx=w/2,cy=h;
+  const r=Math.min(w/2,h)*0.95; // kisebb sugár
+  const theta=valueToAngleRad(v);
+  const x=cx+r*Math.cos(theta);
+  const y=cy-r*Math.sin(theta);
+  return {left:x+offset*Math.cos(theta), top:y-offset*Math.sin(theta)};
 }
 
 function renderList(){
-  labelsList.innerHTML = "";
-  if(labels.length === 0){ labelsList.textContent = "Nincsenek feliratok — adj hozzá egyet fent."; return; }
+  labelsList.innerHTML="";
+  if(labels.length===0){ labelsList.textContent="Nincsenek feliratok."; return; }
   labels.forEach(l=>{
-    const row = document.createElement("div"); row.className="item";
-    const meta = document.createElement("div"); meta.className="meta";
-    meta.textContent = `${l.value} → ${l.text}`;
-    const controls = document.createElement("div");
-    const editB = document.createElement("button"); editB.className="edit"; editB.textContent="Szerkeszt";
-    editB.addEventListener("click", ()=> editLabel(l.id));
-    const delB = document.createElement("button"); delB.className="del"; delB.textContent="Töröl";
-    delB.addEventListener("click", ()=> removeLabel(l.id));
+    const row=document.createElement("div"); row.className="item";
+    const meta=document.createElement("div"); meta.className="meta";
+    meta.textContent=`${l.value} → ${l.text}`;
+    const controls=document.createElement("div");
+    const editB=document.createElement("button"); editB.className="edit"; editB.textContent="Szerkeszt";
+    editB.addEventListener("click",()=>editLabel(l.id));
+    const delB=document.createElement("button"); delB.className="del"; delB.textContent="Töröl";
+    delB.addEventListener("click",()=>removeLabel(l.id));
     controls.appendChild(editB); controls.appendChild(delB);
     row.appendChild(meta); row.appendChild(controls);
     labelsList.appendChild(row);
@@ -136,14 +139,12 @@ function renderList(){
 function renderLabels(){
   meter.querySelectorAll(".label").forEach(n=>n.remove());
   if(labels.length===0) return;
-  const rect = meter.getBoundingClientRect();
-  if(rect.width===0 || rect.height===0){ setTimeout(renderLabels,100); return; }
+  const rect=meter.getBoundingClientRect();
   labels.forEach(l=>{
-    const pos = computePosForValueUsingRect(l.value,rect,12);
-    const dom = document.createElement("div");
+    const pos=computePosForValueUsingRect(l.value,rect,12);
+    const dom=document.createElement("div");
     dom.className="label"; dom.textContent=l.text; dom.dataset.id=l.id;
-    dom.title=`érték: ${l.value}`;
-    dom.addEventListener("dblclick", ()=> editLabel(l.id));
+    dom.title=`érték: ${l.value}`; dom.addEventListener("dblclick",()=>editLabel(l.id));
     dom.style.left=Math.round(pos.left)+"px";
     dom.style.top=Math.round(pos.top)+"px";
     meter.appendChild(dom);
@@ -151,23 +152,32 @@ function renderLabels(){
 }
 
 function addLabelFromInputs(){
-  const v = Math.round(Number(valueInput.value));
-  const txt = textInput.value.trim();
-  if(!txt || !isFinite(v) || v<1 || v>100){ alert("Érvényes érték 1-100 és szöveg szükséges"); return; }
-  const newRef = labelsRef.push();
-  newRef.set({value:v,text:txt,createdAt:Date.now()});
+  const v=Math.round(Number(valueInput.value)); const txt=textInput.value.trim();
+  if(!txt||!isFinite(v)||v<1||v>100){ alert("Érvényes érték 1-100 és szöveg szükséges"); return; }
+  const newRef=labelsRef.push(); newRef.set({value:v,text:txt,createdAt:Date.now()});
   valueInput.value=""; textInput.value="";
 }
 
 function editLabel(id){
-  const cur = labels.find(l=>l.id===id); if(!cur) return;
-  const newVal = Math.round(Number(prompt("Érték (1-100):",cur.value))); if(!isFinite(newVal)||newVal<1||newVal>100) return;
-  const newTxt = prompt("Felirat:",cur.text); if(newTxt===null) return;
+  const cur=labels.find(l=>l.id===id); if(!cur) return;
+  const newVal=Math.round(Number(prompt("Érték (1-100):",cur.value))); if(!isFinite(newVal)||newVal<1||newVal>100) return;
+  const newTxt=prompt("Felirat:",cur.text); if(newTxt===null) return;
   labelsRef.child(id).update({value:newVal,text:newTxt.trim()||cur.text});
 }
 
-function removeLabel(id){ if(!confirm("Biztos törlöd?")) return; labelsRef.child(id).remove(); }
-clearBtn.addEventListener("click", ()=>{ if(confirm("Összes törlése?")) labelsRef.remove(); });
-addBtn.addEventListener("click", addLabelFromInputs);
-window.addEventListener("resize", renderLabels);
-meter.addEventListener("dblclick
+function removeLabel(id){ if(confirm("Biztos törlöd?")) labelsRef.child(id).remove(); }
+
+addBtn.addEventListener("click",addLabelFromInputs);
+window.addEventListener("resize",renderLabels);
+meter.addEventListener("dblclick",()=>valueInput.focus());
+
+labelsRef.on("value", snapshot=>{
+  labels=[];
+  snapshot.forEach(child=>labels.push({...child.val(),id:child.key}));
+  labels.sort((a,b)=> (a.createdAt||0)-(b.createdAt||0));
+  renderList(); renderLabels();
+});
+</script>
+
+</body>
+</html>

@@ -21,7 +21,7 @@ body { font-family: Inter, system-ui, "Segoe UI", Roboto, Arial; margin:0; paddi
 .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
 .item button.edit { background:#f59e0b; color:white; }
 .item button.del { background:#ef4444; color:white; }
-.pointer { position:absolute; width:4px; height:50%; background:red; transform-origin:bottom center; z-index:20; transition: all 0.3s ease; pointer-events:none; }
+.pointer { position:absolute; width:4px; height:50%; background:red; transform-origin:bottom center; z-index:20; transition: transform 0.3s ease; pointer-events:none; }
 @media (max-width:420px){.label{font-size:12px;padding:4px 6px;}.controls { flex-direction: column; align-items: stretch; gap: 6px; } .controls input, .controls button { width: 100%; min-width: unset; }}
 </style>
 </head>
@@ -62,27 +62,19 @@ const labelsList = document.getElementById("labelsList");
 
 let labels = [];
 
-// óraszerű mutató
+// pointer
 let pointer = document.createElement("div");
 pointer.className = "pointer";
 meter.appendChild(pointer);
 
+// átszámítás 1-100 -> -90° és +90° (félkör)
 function valueToAngleRad(v){
   let val = Number(v);
-  if(!isFinite(val)) val = NaN;
-  if(isNaN(val)) return Math.PI;
+  if(!isFinite(val)) val = 50;
   if(val < 1) val = 1;
   if(val > 100) val = 100;
-  return Math.PI * (1 - (val - 1)/99);
-}
-
-function computePosForValueUsingRect(v, rect, offset=6){
-  const w = rect.width, h = rect.height, cx = w/2, cy = h;
-  const r = Math.min(w/2, h);
-  const theta = valueToAngleRad(v);
-  const x = cx + r * Math.cos(theta);
-  const y = cy - r * Math.sin(theta);
-  return { theta, x, y, r, cx, cy };
+  // -90° (bal) -> +90° (jobb)
+  return (val - 50) * Math.PI / 100; // -0.5π ... +0.5π rad
 }
 
 function renderList(){
@@ -105,12 +97,10 @@ function renderList(){
     controls.appendChild(editB); controls.appendChild(delB);
     row.appendChild(meta); row.appendChild(controls);
 
-    // kattintásra a mutató ide ugrik
+    // pointer ide ugrik
     row.addEventListener("click", () => {
-      const rect = meter.getBoundingClientRect();
-      const pos = computePosForValueUsingRect(l.value, rect);
-      const angleDeg = pos.theta * 180 / Math.PI;
-      pointer.style.transform = `rotate(${angleDeg}deg)`;
+      const angle = valueToAngleRad(l.value);
+      pointer.style.transform = `rotate(${angle}rad)`;
     });
 
     labelsList.appendChild(row);
@@ -120,20 +110,22 @@ function renderList(){
 function renderLabels(){
   meter.querySelectorAll(".label").forEach(n => n.remove());
   if(labels.length === 0) return;
+
   const rect = meter.getBoundingClientRect();
-  const positions = labels.map(l=>{
-    const p = computePosForValueUsingRect(l.value, rect, 12);
-    return { id:l.id, data:l, ...p };
-  });
-  positions.forEach(pos=>{
+  const cx = rect.width/2, cy = rect.height;
+
+  labels.forEach(l=>{
+    const theta = valueToAngleRad(l.value);
+    const r = Math.min(cx, cy) * 0.9; // radius
+    const x = cx + r * Math.sin(theta);
+    const y = cy - r * Math.cos(theta);
+
     const dom = document.createElement("div");
     dom.className = "label";
-    dom.textContent = pos.data.text ?? "";
-    dom.dataset.id = pos.id;
-    dom.title = `érték: ${pos.data.value} · id: ${pos.id}`;
-    dom.addEventListener("dblclick", ()=> editLabel(pos.id));
-    dom.style.left = Math.round(pos.cx + pos.r * Math.cos(pos.theta)) + "px";
-    dom.style.top  = Math.round(pos.cy - pos.r * Math.sin(pos.theta)) + "px";
+    dom.textContent = l.text ?? "";
+    dom.dataset.id = l.id;
+    dom.style.left = `${x}px`;
+    dom.style.top = `${y}px`;
     meter.appendChild(dom);
   });
 }
@@ -144,9 +136,7 @@ function addLabelFromInputs(){
   if(!txt){ alert("Adj meg egy feliratot!"); return; }
   const v = Math.round(Number(vRaw));
   if(!isFinite(v) || v < 1 || v > 100){ alert("Adj meg egy érvényes számot 1 és 100 között!"); return; }
-  const newRef = labelsRef.push();
-  const obj = { value: v, text: txt, createdAt: Date.now() };
-  newRef.set(obj);
+  labelsRef.push({ value: v, text: txt, createdAt: Date.now() });
   valueInput.value = ""; textInput.value = "";
 }
 
@@ -177,10 +167,10 @@ labelsRef.on("value", snapshot => {
     const data = child.val();
     labels.push({...data, id: child.key});
   });
-  labels.sort((a, b) => (a.value || 0) - (b.value || 0));
+  labels.sort((a,b)=>(a.value||0)-(b.value||0));
   renderList();
   renderLabels();
-}, err => { console.error(err); });
+});
 </script>
 
 </body>

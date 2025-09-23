@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Risk meter - szöveges feliratok</title>
+  <title>Risk meter</title>
   <style>
     :root { --max-width: 760px; }
     body { font-family: Inter, system-ui, "Segoe UI", Roboto, Arial; margin:0; padding:20px;
@@ -13,9 +13,9 @@
     .controls button { padding:8px 12px; border-radius:8px; border:none; background:#2f80ed; color:white; cursor:pointer; font-weight:600; }
     .controls button.secondary { background:#6b7280; }
     .meter-wrap { width:min(92vw,var(--max-width)); aspect-ratio:2/1; background-image:url("meter.png"); background-repeat:no-repeat; background-position:center bottom; background-size:contain; position:relative; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); overflow:visible; }
-    .label { position:absolute; transform:translate(-50%,-50%); font-size:14px; font-weight:700; pointer-events:auto; user-select:none; padding:4px 8px; border-radius:6px; background:rgba(255,255,255,0.85); box-shadow:0 2px 8px rgba(16,24,40,0.08); white-space:nowrap; cursor:default; }
+    .label { position:absolute; transform:translate(-50%,-50%); font-size:14px; font-weight:700; pointer-events:auto; user-select:none; padding:4px 8px; border-radius:6px; background:rgba(255,255,255,0.85); box-shadow:0 2px 8px rgba(16,24,40,0.08); white-space:nowrap; cursor:default; z-index:10; }
     .list { width:min(92vw,var(--max-width)); max-width:var(--max-width); background:white; border-radius:8px; padding:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06); display:grid; gap:6px; }
-    .item { display:flex; gap:8px; align-items:center; justify-content:space-between; }
+    .item { display:flex; gap:8px; align-items:center; justify-content:space-between; position:relative; }
     .item>.meta { font-weight:600; }
     .item button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
     .item button.edit { background:#f59e0b; color:white; }
@@ -63,103 +63,125 @@
 
   let labels = [];
 
-  function valueToAngleRad(v){
+  function valueToAngleRad(v) {
     let val = Number(v);
-    if(!isFinite(val)) val = 1;
-    if(val < 1) val = 1;
-    if(val > 100) val = 100;
+    if (!isFinite(val)) val = 1;
+    if (val < 1) val = 1;
+    if (val > 100) val = 100;
     return Math.PI * (1 - (val - 1) / 99);
   }
 
-  function computePosForValue(v, offset=12){
-    const rect = meter.getBoundingClientRect(),
-          w = rect.width, h = rect.height,
-          cx = w/2, cy = h, r = Math.min(w/2,h),
-          theta = valueToAngleRad(v),
-          x = cx + r * Math.cos(theta),
-          y = cy - r * Math.sin(theta);
-    return {left: x + offset*Math.cos(theta), top: y - offset*Math.sin(theta)};
+  function computePosForValue(v, offset = 12) {
+    const rect = meter.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    const cx = w / 2;
+    const cy = h;
+    const r = Math.min(w / 2, h);
+    const theta = valueToAngleRad(v);
+    const x = cx + r * Math.cos(theta);
+    const y = cy - r * Math.sin(theta);
+    return { left: x + offset * Math.cos(theta), top: y - offset * Math.sin(theta) };
   }
 
-  function renderList(){
-    labelsList.innerHTML="";
-    if(labels.length===0){
-      labelsList.textContent="Nincsenek feliratok — adj hozzá egyet fent.";
+  function createLabelDom(obj) {
+    const d = document.createElement("div");
+    d.className = "label";
+    d.dataset.id = obj.id;
+    d.title = "Dupla katt rá a szerkesztéshez";
+    d.innerHTML = obj.text;
+    d.addEventListener("dblclick", () => editLabel(obj.id));
+    return d;
+  }
+
+  function renderList() {
+    labelsList.innerHTML = "";
+    if (labels.length === 0) {
+      labelsList.textContent = "Nincsenek feliratok — adj hozzá egyet fent.";
       return;
     }
-    labels.forEach(l=>{
-      const row=document.createElement("div");
-      row.className="item";
-      const meta=document.createElement("div");
-      meta.className="meta";
-      meta.textContent=l.value+" → "+l.text;
-      const controls=document.createElement("div");
-      const editB=document.createElement("button");
-      editB.className="edit";
-      editB.textContent="Szerkeszt";
-      editB.addEventListener("click",()=>editLabel(l.id));
-      const delB=document.createElement("button");
-      delB.className="del";
-      delB.textContent="Töröl";
-      delB.addEventListener("click",()=>removeLabel(l.id));
-      controls.appendChild(editB); controls.appendChild(delB);
-      row.appendChild(meta); row.appendChild(controls);
+    console.log("Rendering list with", labels.length, "items"); // Debug
+    labels.forEach((l, index) => {
+      console.log("Rendering list item:", l); // Debug
+      const row = document.createElement("div");
+      row.className = "item";
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = l.value + " → " + l.text;
+      const controls = document.createElement("div");
+      const editB = document.createElement("button");
+      editB.className = "edit";
+      editB.textContent = "Szerkeszt";
+      editB.addEventListener("click", () => editLabel(l.id));
+      const delB = document.createElement("button");
+      delB.className = "del";
+      delB.textContent = "Töröl";
+      delB.addEventListener("click", () => removeLabel(l.id));
+      controls.appendChild(editB);
+      controls.appendChild(delB);
+      row.appendChild(meta);
+      row.appendChild(controls);
       labelsList.appendChild(row);
     });
   }
 
-  function renderLabels(){
-    meter.querySelectorAll(".label").forEach(n=>n.remove());
-    labels.forEach(l=>{
-      const dom=document.createElement("div");
-      dom.className="label";
-      dom.dataset.id=l.id;
-      dom.textContent=l.text;
+  function renderLabels() {
+    meter.querySelectorAll(".label").forEach(n => n.remove());
+    console.log("Rendering labels with", labels.length, "items"); // Debug
+    labels.forEach((l, index) => {
+      console.log("Rendering label:", l); // Debug
+      const dom = createLabelDom(l);
       meter.appendChild(dom);
-      const pos=computePosForValue(l.value, l.offset||12);
-      dom.style.left=pos.left+"px";
-      dom.style.top=pos.top+"px";
+      const pos = computePosForValue(l.value, 12 + index * 5);
+      dom.style.left = pos.left + "px";
+      dom.style.top = pos.top + "px";
+      dom.style.zIndex = 10 + index; // Növekvő z-index a későbbi címkéknek
     });
   }
 
   // CRUD
-  function addLabelFromInputs(){
-    const vRaw=valueInput.value, txt=textInput.value.trim();
-    if(!txt){alert("Adj meg egy feliratot!"); return;}
-    const v=Math.round(Number(vRaw));
-    if(!isFinite(v)||v<1||v>100){alert("Érvénytelen szám!"); return;}
-    const newRef = labelsRef.push();   // <<<<< EZ a fontos
-    newRef.set({value:v,text:txt});
-    valueInput.value=""; textInput.value="";
+  function addLabelFromInputs() {
+    const vRaw = valueInput.value;
+    const txt = textInput.value.trim();
+    if (!txt) { alert("Adj meg egy feliratot!"); return; }
+    const v = Math.round(Number(vRaw));
+    if (!isFinite(v) || v < 1 || v > 100) { alert("Érvénytelen szám!"); return; }
+    const id = labelsRef.push().key;
+    const obj = { value: v, text: txt };
+    labelsRef.child(id).set(obj);
+    valueInput.value = "";
+    textInput.value = "";
   }
 
-  function editLabel(id){
-    const cur = labels.find(l=>l.id===id);
-    if(!cur) return;
+  function editLabel(id) {
+    const cur = labels.find(l => l.id === id);
+    if (!cur) return;
     const newVal = Math.round(Number(prompt("Érték (1-100):", cur.value)));
-    if(!isFinite(newVal)||newVal<1||newVal>100) { alert("Érvénytelen szám!"); return; }
+    if (!isFinite(newVal) || newVal < 1 || newVal > 100) { alert("Érvénytelen szám!"); return; }
     const newTxt = prompt("Felirat szövege:", cur.text);
-    if(newTxt===null) return;
-    labelsRef.child(id).update({value:newVal,text:newTxt.trim()||cur.text});
+    if (newTxt === null) return;
+    labelsRef.child(id).update({ value: newVal, text: newTxt.trim() || cur.text });
   }
 
-  function removeLabel(id){
-    if(!confirm("Biztos törlöd ezt a feliratot?")) return;
+  function removeLabel(id) {
+    if (!confirm("Biztos törlöd ezt a feliratot?")) return;
     labelsRef.child(id).remove();
   }
 
-  clearBtn.addEventListener("click",()=>{
-    if(!confirm("Összes felirat törlése?")) return;
+  clearBtn.addEventListener("click", () => {
+    if (!confirm("Összes felirat törlése?")) return;
     labelsRef.remove();
   });
 
-  addBtn.addEventListener("click",addLabelFromInputs);
-  window.addEventListener("resize",renderLabels);
+  addBtn.addEventListener("click", addLabelFromInputs);
+  window.addEventListener("resize", renderLabels);
+  meter.addEventListener("dblclick", () => valueInput.focus());
 
   // Valós idejű frissítés
-  labelsRef.on("value", snapshot=>{
+  labelsRef.on("value", snapshot => {
     labels = [];
-    snapshot.forEach(child => labels.push({...child.val(),id:child.key}));
+    snapshot.forEach(child => labels.push({ ...child.val(), id: child.key }));
+    console.log("Labels from Firebase:", labels); // Debug
     renderList();
     renderLabels();
   });

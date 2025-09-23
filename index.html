@@ -85,11 +85,10 @@ function valueToNeedleAngle(v){
   let val = Number(v);
   if(val < 1) val = 1;
   if(val > 100) val = 100;
-  // 1 -> -90°, 50 -> 0°, 100 -> +90°
-  return ((val - 50) / 49) * (Math.PI / 2);
+  // 1 → -90°, 50 → 0°, 100 → +90°
+  const deg = -90 + ((val - 1) / 99) * 180;
+  return deg * Math.PI / 180; // fok → radián
 }
-
-
 
 
   function computePosForValueUsingRect(v, rect, offset=6){

@@ -126,9 +126,27 @@ function updatePointer(value) {
   const meterRect = meter.getBoundingClientRect();
 
   // A mutató hossza a háttérkép szélességéhez igazítva
-  const pointerLength = meterRect.width * 0.4;  // A mutató hossza a háttérkép szélességének 40%-a lesz (állítható)
+  const pointerLength = meterRect.width * 0.4;  // A mutató hossza a háttérkép szélességének 40%-a (állítható)
+  
   pointer.style.borderBottomWidth = `${pointerLength}px`;  // A mutató hosszának beállítása
+
+  // Biztosítjuk, hogy a mutató középen legyen és jól látszódjon
+  const meterWidth = meterRect.width;
+  pointer.style.left = `${meterWidth / 2}px`;  // Középre pozicionálás
+  
+  // A mutató függőleges pozíciójának finomhangolása
+  const meterHeight = meterRect.height;
+  pointer.style.top = `${meterHeight / 2}px`; // A háttérkép közepére helyezi a mutatót
 }
+
+// Ezt a `window.addEventListener("resize")` eseményen belül is meghívhatjuk,
+// hogy mindig frissüljön a mutató, ha változik a képernyő mérete.
+window.addEventListener("resize", function() {
+  if (labels.length > 0) {
+    updatePointer(labels[0].value);
+  }
+});
+
 
 
 

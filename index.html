@@ -36,7 +36,7 @@
   /* Muattó formája */
   border-left: 4px solid transparent;   /* csúcs szélessége bal */
   border-right: 4px solid transparent;  /* csúcs szélessége jobb */
-  /* border-bottom: 25vw solid red; */
+  border-bottom: 1px solid transparent; /* alapértelmezett szín nincs */
 }
 
     
@@ -126,12 +126,14 @@ function updatePointer(value){
   const pointerLength = meterWidth * 0.25; // például a mutató hossza a szélesség 25%-a
 
   // Beállítjuk a pointer stílusait
-  pointer.style.borderBottomWidth = `${pointerLength}px`;
+  pointer.style.height = `${pointerLength}px`; // magasság beállítása
+  pointer.style.borderBottom = `${pointerLength}px solid red`; // piros szín
 
   // A mutató forgatása a kívánt érték alapján
   const angle = valueToNeedleAngle(value);
   pointer.style.transform = `rotate(${angle}rad)`;
 }
+
 
 
 

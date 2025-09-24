@@ -36,7 +36,7 @@
   /* Muattó formája */
   border-left: 4px solid transparent;   /* csúcs szélessége bal */
   border-right: 4px solid transparent;  /* csúcs szélessége jobb */
-  border-bottom: 0 solid red; /* Kezdetben nem szükséges a hossz, majd a JS-ben számítjuk ki */
+  border-bottom: 15vw solid red;       /* a mutató hosszát a képernyő szélességéhez igazítjuk */
 }
 
     
@@ -118,37 +118,10 @@ function valueToNeedleAngle(v){
     return { theta, x, y, left: x + offset*Math.cos(theta), top: y - offset*Math.sin(theta), r, cx, cy };
   }
 
-function updatePointer(value) {
+function updatePointer(value){
   const angle = valueToNeedleAngle(value);
   pointer.style.transform = `rotate(${angle}rad)`;
-
-  // A háttérkép méretének lekérdezése
-  const meterRect = meter.getBoundingClientRect();
-
-  // A mutató hossza a háttérkép szélességéhez igazítva
-  const pointerLength = meterRect.width * 0.4;  // A mutató hossza a háttérkép szélességének 40%-a (állítható)
-  
-  pointer.style.borderBottomWidth = `${pointerLength}px`;  // A mutató hosszának beállítása
-
-  // A mutató függőleges pozíciójának finomhangolása
-  const meterHeight = meterRect.height;
-  const pointerTop = meterHeight / 2 - pointerLength / 2;  // Az alja a középvonalon legyen
-  pointer.style.bottom = `${pointerLength}px`;  // A forgástengely beállítása az alsó középpontra
-
-
-  // Biztosítjuk, hogy a mutató középen legyen vízszintesen
-  const meterWidth = meterRect.width;
-  pointer.style.left = `${meterWidth / 2}px`;  // Középre pozicionálás
 }
-
-// Ezt a `window.addEventListener("resize")` eseményen belül is meghívhatjuk,
-// hogy mindig frissüljön a mutató, ha változik a képernyő mérete.
-window.addEventListener("resize", function() {
-  if (labels.length > 0) {
-    updatePointer(labels[0].value);
-  }
-});
-
 
 
   function renderList(){

@@ -36,7 +36,7 @@
   /* Muattó formája */
   border-left: 4px solid transparent;   /* csúcs szélessége bal */
   border-right: 4px solid transparent;  /* csúcs szélessége jobb */
-  border-bottom: 1px solid transparent; /* alapértelmezett szín nincs */
+  border-bottom: 30vw solid red;       /* a mutató hosszát a képernyő szélességéhez igazítjuk */
 }
 
     
@@ -119,22 +119,9 @@ function valueToNeedleAngle(v){
   }
 
 function updatePointer(value){
-  const meterRect = meter.getBoundingClientRect(); // lekérdezzük a meter elem méretét
-  const meterWidth = meterRect.width; // a meter elem szélessége
-
-  // Beállítjuk a mutató hosszát a meter elem szélességéhez arányosan
-  const pointerLength = meterWidth * 0.25; // például a mutató hossza a szélesség 25%-a
-
-  // Beállítjuk a pointer stílusait
-  pointer.style.height = `${pointerLength}px`; // magasság beállítása
-  pointer.style.borderBottom = `${pointerLength}px solid red`; // piros szín
-
-  // A mutató forgatása a kívánt érték alapján
   const angle = valueToNeedleAngle(value);
   pointer.style.transform = `rotate(${angle}rad)`;
 }
-
-
 
 
   function renderList(){

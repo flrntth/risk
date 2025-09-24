@@ -36,7 +36,7 @@
   /* Muattó formája */
   border-left: 4px solid transparent;   /* csúcs szélessége bal */
   border-right: 4px solid transparent;  /* csúcs szélessége jobb */
-  border-bottom: 0 solid blue; /* Kezdetben nem szükséges a hossz, majd a JS-ben számítjuk ki */
+  border-bottom: 0 solid red; /* Kezdetben nem szükséges a hossz, majd a JS-ben számítjuk ki */
 }
 
     
@@ -133,7 +133,8 @@ function updatePointer(value) {
   // A mutató függőleges pozíciójának finomhangolása
   const meterHeight = meterRect.height;
   const pointerTop = meterHeight / 2 - pointerLength / 2;  // Az alja a középvonalon legyen
-  pointer.style.top = `${pointerTop}px`;  // Középre pozicionálás
+  pointer.style.bottom = `${pointerLength}px`;  // A forgástengely beállítása az alsó középpontra
+
 
   // Biztosítjuk, hogy a mutató középen legyen vízszintesen
   const meterWidth = meterRect.width;
